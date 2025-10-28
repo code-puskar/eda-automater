@@ -1,11 +1,14 @@
-import UploadForm from './components/UploadForm';
+import { Routes, Route } from 'react-router-dom';
+import Home from './Home';
+import UploadForm from "./components/UploadForm";
+
 
 function App() {
   return (
-    <div className="min-h-screen bg-white">
-      <h1 className="text-2xl font-bold text-center mt-8">EDA Automater</h1>
-      <UploadForm />
-    </div>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/upload" element={<UploadForm />} />
+    </Routes>
   );
 }
 
