@@ -13,7 +13,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5174"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -59,20 +59,25 @@ async def upload(
         df = df.dropna()
     elif fill_mean:
         df = df.fillna(df.mean(numeric_only=True))
-      # Outlier Removal
+
+    # Numeric columns (safe default)
+    numeric_cols = df.select_dtypes(include='number').columns.tolist()
+    if not numeric_cols:
+        raise ValueError("No numeric columns found in the uploaded dataset.")
+
+    # Outlier Removal
     if remove_outliers:
-       numeric_cols = df.select_dtypes(include=np.number).columns
-    if outlier_method == "IQR":
-        for col in numeric_cols:
-            Q1 = df[col].quantile(0.25)
-            Q3 = df[col].quantile(0.75)
-            IQR = Q3 - Q1
-            df = df[(df[col] >= Q1 - 1.5 * IQR) & (df[col] <= Q3 + 1.5 * IQR)]
-    elif outlier_method == "Z-score":
-        for col in numeric_cols:
-            mean = df[col].mean()
-            std = df[col].std()
-            df = df[(np.abs((df[col] - mean) / std) <= 3)]
+        if outlier_method == "IQR":
+            for col in numeric_cols:
+                Q1 = df[col].quantile(0.25)
+                Q3 = df[col].quantile(0.75)
+                IQR = Q3 - Q1
+                df = df[(df[col] >= Q1 - 1.5 * IQR) & (df[col] <= Q3 + 1.5 * IQR)]
+        elif outlier_method == "Z-score":
+            for col in numeric_cols:
+                mean = df[col].mean()
+                std = df[col].std()
+                df = df[(np.abs((df[col] - mean) / std) <= 3)]
 
     # Encoding
     encoding_maps = {}
@@ -86,9 +91,8 @@ async def upload(
 
     # Scaling
     if scale:
-        numeric_cols = df.select_dtypes(include=np.number).columns
         scale_cols = [col for col in numeric_cols if col in target_cols]
-        if len(scale_cols) > 0:
+        if scale_cols:
             df[scale_cols] = df[scale_cols].replace([np.inf, -np.inf], np.nan).fillna(0)
             scaler = MinMaxScaler()
             df[scale_cols] = scaler.fit_transform(df[scale_cols])
