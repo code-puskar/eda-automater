@@ -63,7 +63,8 @@ async def upload(
     # Numeric columns (safe default)
     numeric_cols = df.select_dtypes(include='number').columns.tolist()
     if not numeric_cols:
-        raise ValueError("No numeric columns found in the uploaded dataset.")
+        print("No numeric columns found in the uploaded dataset.")
+        #raise ValueError("No numeric columns found in the uploaded dataset.")
 
     # Outlier Removal
     if remove_outliers:
